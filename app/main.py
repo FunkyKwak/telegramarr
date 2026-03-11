@@ -1,7 +1,6 @@
 import os
 import time
 import sqlite3
-from turtle import title
 import requests
 import logging
 
