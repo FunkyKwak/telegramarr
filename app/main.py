@@ -1,6 +1,7 @@
 import os
 import time
 import sqlite3
+from turtle import title
 import requests
 import logging
 
@@ -81,7 +82,11 @@ def send_telegram_message(text: str):
         logging.warning("Telegram credentials not provided, skipping notification")
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    data = {"chat_id": TELEGRAM_CHAT_ID, "text": text}
+    data = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": text,
+        "parse_mode": "HTML"
+    }
     resp = requests.post(url, data=data)
     if not resp.ok:
         logging.error(f"Telegram API returned {resp.status_code}: {resp.text}")
@@ -112,9 +117,17 @@ def main():
             if ok:
                 mark_movie_seen(conn, movie_id, imdbId, tmdbId)
                 title = movie.get("title")
-                msg = f"Film disponible ! \"{title}\" a {len(ok)} nouvelles releases"
-                logging.info(msg)
-                send_telegram_message(msg)
+                logging.info(f"Film disponible ! \"{title}\" a {len(ok)} nouvelles releases")
+
+                msg_html = f"<b>{title}</b>"
+                msg_html += f" (<a href='https://www.imdb.com/title/{imdbId}'>imdb</a> - <a href='https://www.themoviedb.org/movie/{tmdbId}'>tmdb</a>)"
+                msg_html += "\nDisponible au téléchargement !"
+                for r in ok:
+                    release_quality = r.get("quality").get("quality").get("name")
+                    msg_html += f"\n- <i>{release_quality}</i>"
+                    #release_title = r.get("title")
+                    #msg_html += f"\n- <i>{release_quality} - <tg-spoiler>{release_title}</tg-spoiler></i>"
+                send_telegram_message(msg_html)
                 notifications_sent += 1
         logging.info(f"end of loop: processed {len(movies)}, sent {notifications_sent} notifications, sleeping for {POLL_INTERVAL} minutes")
         time.sleep(POLL_INTERVAL * 60)
