@@ -78,6 +78,7 @@ def send_telegram_message(text: str):
 def main():
     conn = init_db(SQLITE_DB_PATH)
     logging.info(f"starting loop with interval {POLL_INTERVAL} minutes")
+    send_telegram_message("Telegramarr démarré !")
 
     while True:
         movies = get_monitored_unfiled_movies()

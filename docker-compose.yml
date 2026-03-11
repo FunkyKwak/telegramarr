@@ -13,5 +13,4 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - POLL_INTERVAL_MINUTES=${POLL_INTERVAL_MINUTES:-10}
-      - SQLITE_DB_PATH=/app/data/telegramarr.db
     restart: unless-stopped

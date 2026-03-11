@@ -18,7 +18,7 @@ passed to `docker-compose`.
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token from BotFather |
 | `TELEGRAM_CHAT_ID` | Chat ID where notifications should be sent |
 | `POLL_INTERVAL_MINUTES` | Loop interval in minutes (default `10`) |
-| `SQLITE_DB_PATH` | Path to the SQLite file inside container (default `/app/data/seen.db`)
+| `SQLITE_DB_PATH` | Path to the SQLite file inside container (default `/app/data/telegramarr.db`)
 
 
 ## Building and running
