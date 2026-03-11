@@ -1,4 +1,4 @@
 #!/bin/sh
 
-python /app/worker.py &
-python /app/api.py
+python worker.py &
+python api.py
