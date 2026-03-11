@@ -9,26 +9,20 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 # --- CONFIGURATION ---
-RADARR_HOST = os.getenv("RADARR_HOST", "radarr")
-RADARR_PORT = os.getenv("RADARR_PORT", "7878")
-RADARR_API_KEY = os.getenv("RADARR_API_KEY")
-
 SEERR_HOST = os.getenv("SEERR_HOST", "seerr")
 SEERR_PORT = os.getenv("SEERR_PORT", "5055")
 SEERR_API_KEY = os.getenv("SEERR_API_KEY")
+SEERR_BASE = f"http://{SEERR_HOST}:{SEERR_PORT}/api/v1"
 
 PROWLARR_HOST = os.getenv("PROWLARR_HOST", "prowlarr")
 PROWLARR_PORT = os.getenv("PROWLARR_PORT", "9696")
 PROWLARR_API_KEY = os.getenv("PROWLARR_API_KEY")
+PROWLARR_BASE = f"http://{PROWLARR_HOST}:{PROWLARR_PORT}/api/v1"
 
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-
-SEERR_BASE = f"http://{SEERR_HOST}:{SEERR_PORT}/api/v1"
-RADARR_BASE = f"http://{RADARR_HOST}:{RADARR_PORT}/api/v3"
-PROWLARR_BASE = f"http://{PROWLARR_HOST}:{PROWLARR_PORT}/api/v1"
 
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/app/data/telegramarr.db")
 

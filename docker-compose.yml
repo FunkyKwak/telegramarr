@@ -7,8 +7,19 @@ services:
     volumes:
       - path_to_telegramarr:/app/data
     environment:
-      - RADARR_API_KEY=${RADARR_API_KEY}
+      - SEERR_HOST=${SEERR_HOST:-seerr}
+      - SEERR_PORT=${SEERR_PORT:-5055}
+      - SEERR_API_KEY=${SEERR_API_KEY}
+
+      - PROWLARR_HOST=${PROWLARR_HOST:-prowlarr}
+      - PROWLARR_PORT=${PROWLARR_PORT:-9696}
+      - PROWLARR_API_KEY=${PROWLARR_API_KEY}
+
+      - TMDB_API_KEY=${TMDB_API_KEY}
+
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-      - POLL_INTERVAL_MINUTES=${POLL_INTERVAL_MINUTES:-10}
+
+      - LOOP_INTERVAL_HOURS=${LOOP_INTERVAL_HOURS:-1}
+      - SEARCH_INTERVAL_HOURS_PER_MOVIE=${SEARCH_INTERVAL_HOURS_PER_MOVIE:-6}
     restart: unless-stopped
