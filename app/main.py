@@ -26,7 +26,8 @@ def init_db(path: str):
         CREATE TABLE IF NOT EXISTS seen_movies (
             movie_id INTEGER NOT NULL PRIMARY KEY,
             imdbId TEXT NOT NULL,
-            tmdbId TEXT NOT NULL
+            tmdbId TEXT NOT NULL,
+            inserted_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
@@ -70,7 +71,7 @@ def is_movie_seen(conn, movie_id: int) -> bool:
 
 def mark_movie_seen(conn, movie_id: int, imdbId: str, tmdbId: str):
     c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO seen_movies(movie_id, imdbId, tmdbId) VALUES(?, ?, ?)", (movie_id, imdbId, tmdbId))
+    c.execute("INSERT OR IGNORE INTO seen_movies(movie_id, imdbId, tmdbId, inserted_at) VALUES(?, ?, ?, DATETIME('now'))", (movie_id, imdbId, tmdbId))
     conn.commit()
 
 
