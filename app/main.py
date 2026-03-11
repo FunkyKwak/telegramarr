@@ -34,11 +34,10 @@ def init_db(path: str):
     return conn
 
 
-def get_monitored_unfiled_movies():
+def get_monitored_unfiled_movies(session: requests.Session):
     url = f"{RADARR_BASE}/movie"
     params = {"apikey": RADARR_API_KEY}
-    resp = requests.get(url, params=params, timeout=30)
-    resp.raise_for_status()
+    resp = api_get_request(session, url, params)
     movies = resp.json()
     # filter monitored=true and hasFile=false
     return [m for m in movies if m.get("monitored") and not m.get("hasFile")]
@@ -47,9 +46,20 @@ def get_monitored_unfiled_movies():
 def get_releases_for_movie(session: requests.Session, movie_id: int):
     url = f"{RADARR_BASE}/release"
     params = {"apikey": RADARR_API_KEY, "movieId": movie_id}
-    resp = session.get(url, params=params, timeout=30)
+    resp = api_get_request(session, url, params)
     resp.raise_for_status()
     return resp.json()
+
+def api_get_request(session: requests.Session, url: str, params: dict, max_retries: int = 3) -> requests.Response:
+    for attempt in range(1, max_retries + 1):
+        try:
+            return session.get(url, params=params, timeout=30 * attempt)
+        except requests.exceptions.ConnectionError as e:
+            if attempt == max_retries:
+                raise
+            logging.warning(f"Connection error on attempt {attempt}: {e}")
+            time.sleep(1)
+
 
 
 def is_movie_seen(conn, movie_id: int) -> bool:
@@ -81,11 +91,11 @@ def main():
     send_telegram_message("Telegramarr démarré !")
 
     while True:
-        movies = get_monitored_unfiled_movies()
+        httpSession = requests.Session()
+
+        movies = get_monitored_unfiled_movies(httpSession)
         notifications_sent = 0
         logging.info(f"found {len(movies)} monitored/unfiled movies")
-
-        httpSession = requests.Session()
 
         for movie in movies:
             movie_id = movie.get("id")
