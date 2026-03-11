@@ -55,7 +55,7 @@ def api_get_request(session: requests.Session, url: str, params: dict, max_retri
     time.sleep(0.5)
     for attempt in range(1, max_retries + 1):
         try:
-            return session.get(url, params=params, timeout=(5, 30) * attempt)
+            return session.get(url, params=params, timeout=(5 * attempt, 30 * attempt))
         except requests.exceptions.ConnectionError as e:
             if attempt == max_retries:
                 raise
