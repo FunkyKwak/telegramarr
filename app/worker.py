@@ -62,13 +62,47 @@ CREATE INDEX IF NOT EXISTS idx_status ON requests(status);""")
 conn.commit()
 
 # --- FONCTIONS UTILES ---
-def get_seerr_requests(filter : str = "all"):
+
+
+def api_get_request(session: requests.Session, url: str, headers:dict = None, params: dict = None, max_retries: int = 3) -> requests.Response:
+    time.sleep(0.5)
+    for attempt in range(1, max_retries + 1):
+        try:
+            return session.get(url, headers=headers, params=params, timeout=(5 * attempt, 30 * attempt))
+        except requests.exceptions.ConnectionError as e:
+            if attempt == max_retries:
+                raise
+            logging.warning(f"Connection error on attempt {attempt} for {url} : {e}")
+            time.sleep(1)
+
+
+def get_seerr_requests(session: requests.Session, filter : str = "all"):
     url = f"{SEERR_BASE}/request"
-    resp = requests.get(url, headers={"X-Api-Key": SEERR_API_KEY})
-    #resp = requests.get(url, headers={"X-Api-Key": SEERR_API_KEY}, params={"filter": filter})
+    resp = requests.get(url, )
+    resp = api_get_request(session, url, 
+        headers={"X-Api-Key": SEERR_API_KEY},
+        params={"filter": filter}
+    )
     resp.raise_for_status()
     return resp.json()["results"]
 
+
+def get_tmdb_data(session: requests.Session, tmdbId):
+    url = f"https://api.themoviedb.org/3/movie/{tmdbId}"
+    resp = api_get_request(session, url, 
+        params = {"api_key": TMDB_API_KEY, "language": "fr-FR", "append_to_response": "external_ids"}
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+def search_prowlarr(session: requests.Session, imdbId):
+    url = f"{PROWLARR_BASE}/search"
+    resp = api_get_request(session, url, 
+        headers={"X-Api-Key": PROWLARR_API_KEY},
+        params={"query": imdbId}
+    )
+    resp.raise_for_status()
+    return resp.json()
 
 def send_telegram_message(text: str):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -84,24 +118,12 @@ def send_telegram_message(text: str):
     if not resp.ok:
         logging.error(f"Telegram API returned {resp.status_code}: {resp.text}")
 
-def get_tmdb_data(tmdbId):
-    url = f"https://api.themoviedb.org/3/movie/{tmdbId}"
-    params = {"api_key": TMDB_API_KEY, "language": "fr-FR", "append_to_response": "external_ids"}
-    resp = requests.get(url, params=params)
-    resp.raise_for_status()
-    return resp.json()
-
-def search_prowlarr(imdbId):
-    url = f"{PROWLARR_BASE}/search"
-    resp = requests.get(url, headers={"X-Api-Key": PROWLARR_API_KEY}, params={"query": imdbId})
-    resp.raise_for_status()
-    return resp.json()
-
 # --- LOGIQUE PRINCIPALE ---
 def main():
     now = datetime.now()
+    httpSession = requests.Session()
 
-    seerr_requests = get_seerr_requests("approved,pending,processing,unavailable,failed")
+    seerr_requests = get_seerr_requests(httpSession) #"approved,pending,processing,unavailable,failed"
     
     for req in seerr_requests:
         seerr_id = req["id"]
@@ -132,7 +154,7 @@ def main():
         if search_needed:
             try:
                 if (not imdbId and tmdbId) or not title or not original_title or not year or not overview or not poster_url or not backdrop_url:
-                    data = get_tmdb_data(tmdbId)
+                    data = get_tmdb_data(httpSession, tmdbId)
                     if not imdbId and tmdbId:
                         imdbId = data.get("external_ids", {}).get("imdb_id")
                     if not title:
@@ -148,7 +170,7 @@ def main():
                     if not backdrop_url:
                         backdrop_url = f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path')}" if data.get('backdrop_path') else None
 
-                releases = search_prowlarr(imdbId)
+                releases = search_prowlarr(httpSession, imdbId)
             except Exception as e:
                 logging.error(f"Erreur Prowlarr pour seerr_id {seerr_id} (imdbId {imdbId}, tmdbId {tmdbId}, tvdbId {tvdbId}): {e}")
                 continue
