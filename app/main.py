@@ -1,8 +1,12 @@
 import logging
 import os
 import sqlite3
+import time
 import requests
 from datetime import datetime, timedelta
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
 
 # --- CONFIGURATION ---
 RADARR_HOST = os.getenv("RADARR_HOST", "radarr")
@@ -28,7 +32,8 @@ PROWLARR_BASE = f"http://{PROWLARR_HOST}:{PROWLARR_PORT}/api/v1"
 
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/app/data/telegramarr.db")
 
-SEARCH_INTERVAL_HOURS = int(os.getenv("SEARCH_INTERVAL_HOURS", "6"))
+LOOP_INTERVAL_HOURS = int(os.getenv("LOOP_INTERVAL_HOURS", "1"))
+SEARCH_INTERVAL_HOURS_PER_MOVIE = int(os.getenv("SEARCH_INTERVAL_HOURS_PER_MOVIE", "6"))
 
 # --- BASE DE DONNEES ---
 conn = sqlite3.connect(SQLITE_DB_PATH)
@@ -39,13 +44,27 @@ CREATE TABLE IF NOT EXISTS requests (
     tmdbId INTEGER,
     imdbId TEXT,
     tvdbId INTEGER,
+
     title TEXT,
+    original_title TEXT,
+    year INTEGER,
+    overview TEXT,
+
+    poster_url TEXT,
+    backdrop_url TEXT,
+
+    status TEXT,
+
     inserted_at TEXT,
     last_search TEXT,
     available_at TEXT,
+
+    release_count INTEGER,
     releases TEXT
 )
 """)
+c.execute("""
+CREATE INDEX IF NOT EXISTS idx_status ON requests(status);""")
 conn.commit()
 
 # --- FONCTIONS UTILES ---
@@ -88,9 +107,6 @@ def search_prowlarr(imdbId):
 def main():
     now = datetime.now()
 
-    logging.info(f"starting loop with interval {SEARCH_INTERVAL_HOURS} hours")
-    send_telegram_message("Telegramarr démarré !")
-
     seerr_requests = get_seerr_requests("approved,pending,processing,unavailable,failed")
     
     for req in seerr_requests:
@@ -99,29 +115,45 @@ def main():
         imdbId = req["media"]["imdbId"]
         tvdbId = req["media"]["tvdbId"]
         title = None
+        original_title = None
+        year = None
+        overview = None
+        poster_url = None
+        backdrop_url = None
         
         # vérifier si déjà en base
-        c.execute("SELECT last_search, available_at FROM requests WHERE seerr_id=?", (seerr_id,))
+        c.execute("SELECT title, original_title, year, overview, poster_url, backdrop_url, last_search, available_at FROM requests WHERE seerr_id=?", (seerr_id,))
         row = c.fetchone()
         
         search_needed = True
         if row:
-            last_search_str, available_at, title = row
-            if last_search_str:
-                last_search_dt = datetime.fromisoformat(last_search_str)
-                if now - last_search_dt < timedelta(hours=SEARCH_INTERVAL_HOURS):
+            title, original_title, year, overview, poster_url, backdrop_url, last_search, available_at = row
+            if last_search:
+                last_search_dt = datetime.fromisoformat(last_search)
+                if now - last_search_dt < timedelta(hours=SEARCH_INTERVAL_HOURS_PER_MOVIE):
                     search_needed = False  # déjà recherché récemment
             if available_at:
                 search_needed = False  # déjà disponible
 
         if search_needed:
             try:
-                if (not imdbId and tmdbId) or not title:
+                if (not imdbId and tmdbId) or not title or not original_title or not year or not overview or not poster_url or not backdrop_url:
                     data = get_tmdb_data(tmdbId)
                     if not imdbId and tmdbId:
                         imdbId = data.get("external_ids", {}).get("imdb_id")
                     if not title:
                         title = data.get("title")
+                    if not original_title:
+                        original_title = data.get("original_title")
+                    if not year:
+                        year = data.get("release_date")[:4] if data.get("release_date") else None
+                    if not overview:
+                        overview = data.get("overview")
+                    if not poster_url:
+                        poster_url = f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get('poster_path') else None
+                    if not backdrop_url:
+                        backdrop_url = f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path')}" if data.get('backdrop_path') else None
+
                 releases = search_prowlarr(imdbId)
             except Exception as e:
                 logging.error(f"Erreur Prowlarr pour seerr_id {seerr_id} (imdbId {imdbId}, tmdbId {tmdbId}, tvdbId {tvdbId}): {e}")
@@ -144,17 +176,103 @@ def main():
                 
                 # update DB
                 c.execute("""
-                    INSERT OR REPLACE INTO requests
-                    (seerr_id, tmdbId, imdbId, title, inserted_at, last_search, available_at, releases)
-                    VALUES (?, ?, ?, ?, COALESCE((SELECT inserted_at FROM requests WHERE seerr_id=?), ?), ?, ?, ?)
-                """, (seerr_id, tmdbId, imdbId, title, seerr_id, now.isoformat(), now.isoformat(), now.isoformat(), release_list))
+                    INSERT OR REPLACE INTO requests (
+                        seerr_id,
+                        tmdbId,
+                        imdbId,
+                        tvdbId,
+
+                        title,
+                        original_title,
+                        year,
+                        overview,
+
+                        poster_url,
+                        backdrop_url,
+
+                        status,
+
+                        inserted_at,
+                        last_search,
+                        available_at,
+
+                        release_count,
+                        releases
+                    )
+                    VALUES (
+                        ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                    );
+                    """, (
+                        seerr_id,
+                        tmdbId,
+                        imdbId,
+                        tvdbId,
+
+                        title,
+                        original_title,
+                        year,
+                        overview,
+
+                        poster_url,
+                        backdrop_url,
+
+                        "available",
+
+                        now.isoformat(),
+                        now.isoformat(),
+                        now.isoformat(),
+
+                        len(releases),
+                        release_list
+                    ))
             else:
-                # update last_search
+                # update last_search                
                 c.execute("""
-                    INSERT OR REPLACE INTO requests
-                    (seerr_id, tmdbId, imdbId, title, inserted_at, last_search)
-                    VALUES (?, ?, ?, ?, COALESCE((SELECT inserted_at FROM requests WHERE seerr_id=?), ?), ?)
-                """, (seerr_id, tmdbId, imdbId, title, seerr_id, now.isoformat(), now.isoformat()))
+                    INSERT OR REPLACE INTO requests (
+                        seerr_id,
+                        tmdbId,
+                        imdbId,
+                        tvdbId,
+
+                        title,
+                        original_title,
+                        year,
+                        overview,
+
+                        poster_url,
+                        backdrop_url,
+
+                        status,
+
+                        inserted_at,
+                        last_search,
+
+                        release_count
+                    )
+                    VALUES (
+                        ?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                    )
+                    """, (
+                        seerr_id,
+                        tmdbId,
+                        imdbId,
+                        tvdbId,
+
+                        title,
+                        original_title,
+                        year,
+                        overview,
+
+                        poster_url,
+                        backdrop_url,
+
+                        "pending",
+
+                        now.isoformat(),
+                        now.isoformat(),
+
+                        0
+                    ))
             
             conn.commit()
 
@@ -164,4 +282,9 @@ def main():
     # conn.commit()
 
 if __name__ == "__main__":
-    main()
+    logging.info(f"starting loop with interval {LOOP_INTERVAL_HOURS} hours")
+    send_telegram_message("Telegramarr démarré !")
+    while True:
+        main()
+        logging.info(f"loop finished, sleeping for {LOOP_INTERVAL_HOURS} hours...")
+        time.sleep(LOOP_INTERVAL_HOURS * 3600)
