@@ -52,9 +52,10 @@ def get_releases_for_movie(session: requests.Session, movie_id: int):
     return resp.json()
 
 def api_get_request(session: requests.Session, url: str, params: dict, max_retries: int = 3) -> requests.Response:
+    time.sleep(0.5)
     for attempt in range(1, max_retries + 1):
         try:
-            return session.get(url, params=params, timeout=30 * attempt)
+            return session.get(url, params=params, timeout=(5, 30) * attempt)
         except requests.exceptions.ConnectionError as e:
             if attempt == max_retries:
                 raise
@@ -105,7 +106,7 @@ def main():
             if is_movie_seen(conn, movie_id):
                 continue
             # check releases
-            releases = get_releases_for_movie(httpSession,movie_id)
+            releases = get_releases_for_movie(httpSession, movie_id)
             # select those not rejected
             ok = [r for r in releases if not r.get("rejected")]
             if ok:
