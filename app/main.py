@@ -58,7 +58,7 @@ def api_get_request(session: requests.Session, url: str, params: dict, max_retri
         except requests.exceptions.ConnectionError as e:
             if attempt == max_retries:
                 raise
-            logging.warning(f"Connection error on attempt {attempt}: {e}")
+            logging.warning(f"Connection error on attempt {attempt} for {url} : {e}")
             time.sleep(1)
 
 
