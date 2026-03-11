@@ -37,7 +37,7 @@ def init_db(path: str):
 def get_monitored_unfiled_movies():
     url = f"{RADARR_BASE}/movie"
     params = {"apikey": RADARR_API_KEY}
-    resp = requests.get(url, params=params)
+    resp = requests.get(url, params=params, timeout=30)
     resp.raise_for_status()
     movies = resp.json()
     # filter monitored=true and hasFile=false
@@ -47,7 +47,7 @@ def get_monitored_unfiled_movies():
 def get_releases_for_movie(movie_id: int):
     url = f"{RADARR_BASE}/release"
     params = {"apikey": RADARR_API_KEY, "movieId": movie_id}
-    resp = requests.get(url, params=params)
+    resp = requests.get(url, params=params, timeout=30)
     resp.raise_for_status()
     return resp.json()
 
