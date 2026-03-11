@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY app/ ./app/
+RUN chmod +x /app/start.sh
 
 # Ensure data directory
 RUN mkdir -p /app/data
@@ -17,4 +18,4 @@ RUN mkdir -p /app/data
 # Expose nothing by default
 
 # Run the main script
-CMD ["python", "app/main.py"]
+CMD ["/app/start.sh"]
