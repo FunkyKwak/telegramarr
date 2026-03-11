@@ -8,8 +8,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 # environment configuration
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL_MINUTES", "120"))
-RADARR_HOST = os.getenv("RADARR_HOST")
-RADARR_PORT = os.getenv("RADARR_PORT")
+RADARR_HOST = os.getenv("RADARR_HOST", "radarr")
+RADARR_PORT = os.getenv("RADARR_PORT", "7878")
 RADARR_API_KEY = os.getenv("RADARR_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")

@@ -12,7 +12,7 @@ passed to `docker-compose`.
 
 | Variable | Description |
 |----------|-------------|
-| `RADARR_HOST` | Hostname or IP of Radarr (e.g. `radarr`) |
+| `RADARR_HOST` | Hostname or IP of Radarr (default `radarr`) |
 | `RADARR_PORT` | Port Radarr listens on (default `7878`) |
 | `RADARR_API_KEY` | Your Radarr API key |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token from BotFather |
