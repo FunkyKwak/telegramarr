@@ -44,10 +44,10 @@ def get_monitored_unfiled_movies():
     return [m for m in movies if m.get("monitored") and not m.get("hasFile")]
 
 
-def get_releases_for_movie(movie_id: int):
+def get_releases_for_movie(session: requests.Session, movie_id: int):
     url = f"{RADARR_BASE}/release"
     params = {"apikey": RADARR_API_KEY, "movieId": movie_id}
-    resp = requests.get(url, params=params, timeout=30)
+    resp = session.get(url, params=params, timeout=30)
     resp.raise_for_status()
     return resp.json()
 
@@ -84,6 +84,9 @@ def main():
         movies = get_monitored_unfiled_movies()
         notifications_sent = 0
         logging.info(f"found {len(movies)} monitored/unfiled movies")
+
+        httpSession = requests.Session()
+
         for movie in movies:
             movie_id = movie.get("id")
             imdbId = movie.get("imdbId")
@@ -91,7 +94,7 @@ def main():
             if is_movie_seen(conn, movie_id):
                 continue
             # check releases
-            releases = get_releases_for_movie(movie_id)
+            releases = get_releases_for_movie(httpSession,movie_id)
             # select those not rejected
             ok = [r for r in releases if not r.get("rejected")]
             if ok:
