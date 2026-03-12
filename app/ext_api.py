@@ -59,7 +59,7 @@ def search_prowlarr(session: requests.Session, imdbId):
 
 
 
-def wait_for_service(url, api_key, timeout_minutes=0.5):
+def wait_for_service(url, api_key, timeout_minutes=10):
     start = time.time()
     while True:
         try:
