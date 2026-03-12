@@ -17,6 +17,16 @@ PROWLARR_BASE = f"http://{PROWLARR_HOST}:{PROWLARR_PORT}/api/v1"
 
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 
+SEERR_STATUS_MAP = {
+    1: "pending",
+    2: "approved",
+    3: "declined",
+    4: "processing",
+    5: "available",
+    6: "failed"
+}
+
+
 def api_get_request(session: requests.Session, url: str, headers:dict = None, params: dict = None, max_retries: int = 3) -> requests.Response:
     time.sleep(0.5)
     for attempt in range(1, max_retries + 1):

@@ -30,7 +30,30 @@ def init_db(conn: Connection, c: Cursor):
     """)
     c.execute("""
     CREATE INDEX IF NOT EXISTS idx_status ON requests(status);""")
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS seer_status (
+        seerr_status_id INTEGER PRIMARY KEY,
+        value TEXT,
+        value_fr TEXT
+    );
+    """)
+    c.execute("""INSERT OR REPLACE INTO seer_status (seerr_status_id, value, value_fr) VALUES (1, "pending", "En attente");""")
+    c.execute("""INSERT OR REPLACE INTO seer_status (seerr_status_id, value, value_fr) VALUES (2, "approved", "Approuvé");""")
+    c.execute("""INSERT OR REPLACE INTO seer_status (seerr_status_id, value, value_fr) VALUES (3, "declined", "Refusé");""")
+    c.execute("""INSERT OR REPLACE INTO seer_status (seerr_status_id, value, value_fr) VALUES (4, "processing", "En cours de traitement");""")
+    c.execute("""INSERT OR REPLACE INTO seer_status (seerr_status_id, value, value_fr) VALUES (5, "available", "Disponible");""")
+    c.execute("""INSERT OR REPLACE INTO seer_status (seerr_status_id, value, value_fr) VALUES (6, "failed", "Échec");""")
     conn.commit()
+
+
+
+def load_seerr_status_maps(c: Cursor):
+    c.execute("SELECT seerr_status_id, value FROM seer_status")
+    rows = c.fetchall()
+    id_to_name = {row[0]: row[1] for row in rows}
+    name_to_id = {row[1]: row[0] for row in rows}
+    return id_to_name, name_to_id
+
 
 
 def get_request(c: Cursor, seerr_id):
@@ -100,7 +123,6 @@ def update_last_search(conn: Connection, c: Cursor,
         )
     )
     conn.commit()
-
     
 def update_request_found(conn: Connection, c: Cursor,
     seerr_id,
@@ -178,3 +200,13 @@ def delete_request(conn: Connection, c: Cursor, seerr_id):
     c.execute("DELETE FROM requests WHERE seerr_id=?", (seerr_id,))
     conn.commit()
 
+def delete_removed_requests(conn: Connection, c: Cursor, seerr_requests):
+    seerr_ids = [req["id"] for req in seerr_requests]
+
+    if seerr_ids:
+        placeholders = ",".join("?" * len(seerr_ids))
+        c.execute(f"""
+            DELETE FROM requests
+            WHERE seerr_id NOT IN ({placeholders})
+        """, seerr_ids)
+    conn.commit()

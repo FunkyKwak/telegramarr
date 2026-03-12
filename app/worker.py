@@ -25,6 +25,8 @@ c = conn.cursor()
 
 dll.init_db(conn, c)
 
+SEERR_STATUS_ID_TO_NAME, SEERR_STATUS_NAME_TO_ID = dll.load_seerr_status_maps(c)
+
 # --- FONCTIONS UTILES ---
 
 def send_telegram_message(text: str):
@@ -46,7 +48,7 @@ def main():
     now = datetime.now()
     httpSession = requests.Session()
 
-    seerr_requests = ext_api.get_seerr_requests(httpSession) #"approved,pending,processing,unavailable,failed"
+    seerr_requests = ext_api.get_seerr_requests(httpSession)
     
     for req in seerr_requests:
         seerr_id = req["id"]
@@ -72,8 +74,8 @@ def main():
                     search_needed = False  # déjà recherché récemment
             if available_at:
                 search_needed = False  # déjà disponible
-            if req.status != "approved":
-                search_needed = False  # pas encore approuvé sur Seerr
+            if SEERR_STATUS_ID_TO_NAME[req["status"]] == "available":
+                search_needed = False  # Requête déjà traitée, on peut la sortir de la base
                 dll.delete_request(conn, c, seerr_id)  # supprimer de la DB pour ne pas garder les films refusés
 
         if search_needed:
@@ -150,7 +152,7 @@ def main():
                     backdrop_url,
                     now)
             
-            
+    dll.delete_removed_requests(conn, c, seerr_requests)
 
 if __name__ == "__main__":
     ext_api.wait_for_services()
