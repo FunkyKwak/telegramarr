@@ -62,6 +62,18 @@ CREATE INDEX IF NOT EXISTS idx_status ON requests(status);""")
 conn.commit()
 
 # --- FONCTIONS UTILES ---
+def wait_for_service(url, timeout=60):
+    start = time.time()
+    while True:
+        try:
+            r = requests.get(url, timeout=5)
+            if r.ok:
+                return
+        except:
+            pass
+        if time.time() - start > timeout:
+            raise RuntimeError(f"Service not ready: {url}")
+        time.sleep(2)
 
 
 def api_get_request(session: requests.Session, url: str, headers:dict = None, params: dict = None, max_retries: int = 3) -> requests.Response:
@@ -298,6 +310,9 @@ def main():
     # conn.commit()
 
 if __name__ == "__main__":
+    wait_for_service(f"{SEERR_BASE}/request")
+    wait_for_service(f"{PROWLARR_BASE}/indexer")
+
     logging.info(f"starting loop with interval {LOOP_INTERVAL_HOURS} hours")
     send_telegram_message("Telegramarr démarré !")
     while True:
