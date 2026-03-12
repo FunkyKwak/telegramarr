@@ -18,4 +18,4 @@ RUN mkdir -p /app/data
 EXPOSE 8000
 
 # Start both scripts in parallel
-CMD ["/bin/sh", "-c", "python fill_db_and_notify.py & gunicorn --bind 0.0.0.0:8000 app.api:app"]
+CMD ["/bin/sh", "-c", "python fill_db_and_notify.py & gunicorn --bind 0.0.0.0:8000 api:app"]
