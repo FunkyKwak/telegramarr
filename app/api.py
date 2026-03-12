@@ -34,6 +34,6 @@ def get_requests():
             "poster": r[3]
         })
 
-    return jsonify(result)
+    return jsonify({"data": result})
 
 #app.run(host="0.0.0.0", port=8000)
