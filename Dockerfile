@@ -17,8 +17,8 @@ RUN chmod +x start.sh
 # Ensure data directory
 RUN mkdir -p /app/data
 
-# Expose nothing by default
+# Expose port Flask/Gunicorn
 EXPOSE 8000
 
-# Run the main script
-CMD ["./start.sh"]
+# Start both scripts in parallel
+CMD ["/bin/sh", "-c", "python app/fill_db_and_notify.py & gunicorn --bind 0.0.0.0:8000 app.api:app"]

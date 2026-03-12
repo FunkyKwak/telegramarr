@@ -1,3 +1,5 @@
+# app/api.py
+
 import os
 import sqlite3
 from flask import Flask, jsonify
@@ -6,6 +8,10 @@ from flask import Flask, jsonify
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/app/data/telegramarr.db")
 
 app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return jsonify({"status": "ok"})
 
 @app.route("/requests")
 def get_requests():
@@ -30,4 +36,4 @@ def get_requests():
 
     return jsonify(result)
 
-app.run(host="0.0.0.0", port=8000)
+#app.run(host="0.0.0.0", port=8000)
