@@ -19,7 +19,16 @@ def get_requests():
     c = conn.cursor()
 
     rows = c.execute("""
-    SELECT title, year, status, poster_url
+    SELECT
+        tmdbId,
+        imdbId,
+        tvdbId,
+        title,
+        year,
+        status,
+        poster_url,
+        release_count,
+        releases
     FROM requests
     ORDER BY inserted_at DESC
     """).fetchall()
@@ -28,10 +37,15 @@ def get_requests():
 
     for r in rows:
         result.append({
-            "title": r[0],
-            "year": r[1],
-            "status": r[2],
-            "poster": r[3]
+            "tmdbId": r[0],
+            "imdbId": r[1],
+            "tvdbId": r[2],
+            "title": r[3],
+            "year": r[4],
+            "status": r[5],
+            "poster": r[6],
+            "release_count": r[7],
+            "releases": r[8]
         })
 
     return jsonify({"data": result})
