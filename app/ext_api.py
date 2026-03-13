@@ -50,8 +50,8 @@ def get_seerr_requests(session: requests.Session, filter : str = "all"):
     return resp.json()["results"]
 
 
-def get_tmdb_data(session: requests.Session, tmdbId):
-    url = f"https://api.themoviedb.org/3/movie/{tmdbId}"
+def get_tmdb_data(session: requests.Session, tmdbId, mediaType: str):
+    url = f"https://api.themoviedb.org/3/{mediaType}/{tmdbId}"
     resp = api_get_request(session, url, 
         params = {"api_key": TMDB_API_KEY, "language": "fr-FR", "append_to_response": "external_ids"}
     )
@@ -62,7 +62,7 @@ def search_prowlarr(session: requests.Session, imdbId):
     url = f"{PROWLARR_BASE}/search"
     resp = api_get_request(session, url, 
         headers={"X-Api-Key": PROWLARR_API_KEY},
-        params={"query": imdbId}
+        params = {"query": imdbId}
     )
     resp.raise_for_status()
     return resp.json()

@@ -38,12 +38,15 @@ def do_work():
         tmdbId = req["media"]["tmdbId"]
         imdbId = req["media"]["imdbId"]
         tvdbId = req["media"]["tvdbId"]
+        mediaType = req["media"]["mediaType"]  # movie ou tv
         title = None
         original_title = None
         year = None
         overview = None
         poster_url = None
         backdrop_url = None
+
+        releases = None
         
         # vérifier si déjà en base
         row = dll.get_request(c, seerr_id)
@@ -52,7 +55,7 @@ def do_work():
         new_seerr_request = True
         if row:
             new_seerr_request = False
-            title, original_title, year, overview, poster_url, backdrop_url, last_search, available_at = row
+            mediaType, title, original_title, year, overview, poster_url, backdrop_url, last_search, available_at = row
             if last_search:
                 last_search_dt = datetime.fromisoformat(last_search)
                 if now - last_search_dt < timedelta(hours=SEARCH_INTERVAL_HOURS_PER_MOVIE):
@@ -66,15 +69,24 @@ def do_work():
         if search_needed:
             try:
                 if (not imdbId and tmdbId) or not title or not original_title or not year or not overview or not poster_url or not backdrop_url:
-                    data = ext_api.get_tmdb_data(httpSession, tmdbId)
+                    data = ext_api.get_tmdb_data(httpSession, tmdbId, mediaType)
                     if not imdbId and tmdbId:
                         imdbId = data.get("external_ids", {}).get("imdb_id")
                     if not title:
-                        title = data.get("title")
+                        if mediaType == "movie":
+                            title = data.get("title")
+                        else:
+                            title = data.get("name")
                     if not original_title:
-                        original_title = data.get("original_title")
+                        if mediaType == "movie":
+                            original_title = data.get("original_title")
+                        else:
+                            original_title = data.get("original_name")
                     if not year:
-                        year = data.get("release_date")[:4] if data.get("release_date") else None
+                        if mediaType == "movie":
+                            year = data.get("release_date")[:4] if data.get("release_date") else None
+                        else:
+                            year = data.get("first_air_date")[:4] if data.get("first_air_date") else None
                     if not overview:
                         overview = data.get("overview")
                     if not poster_url:
@@ -82,7 +94,11 @@ def do_work():
                     if not backdrop_url:
                         backdrop_url = f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path')}" if data.get('backdrop_path') else None
 
-                releases = ext_api.search_prowlarr(httpSession, imdbId)
+                if mediaType == "movie":
+                    if not imdbId:
+                        logging.warning(f"Le film {title} ({tmdbId}) n'a pas d'imdbId, impossible de le rechercher dans Prowlarr")
+                    else:
+                        releases = ext_api.search_prowlarr(httpSession, imdbId)
             except Exception as e:
                 logging.error(f"Erreur Prowlarr pour seerr_id {seerr_id} (imdbId {imdbId}, tmdbId {tmdbId}, tvdbId {tvdbId}): {e}")
                 continue
@@ -92,7 +108,7 @@ def do_work():
                 logging.info(f"Film disponible ! \"{title}\" a {len(releases)} nouvelles releases")
 
                 release_list = ""
-                telegram.send_telegram_message(title, imdbId, tmdbId, new_seerr_request, releases, release_list)
+                telegram.build_and_send_telegram_message(title, imdbId, tmdbId, new_seerr_request, mediaType, releases, release_list)
                 
                 # update DB
                 dll.update_request_found(conn, c,
@@ -101,6 +117,7 @@ def do_work():
                     imdbId,
                     tvdbId,
 
+                    mediaType,
                     title,
                     original_title,
                     year,
@@ -120,6 +137,7 @@ def do_work():
                     imdbId,
                     tvdbId,
 
+                    mediaType,
                     title,
                     original_title,
                     year,
@@ -129,7 +147,7 @@ def do_work():
                     backdrop_url,
                     now)
                 if new_seerr_request:
-                    telegram.send_telegram_message(title, imdbId, tmdbId, new_seerr_request, releases)
+                    telegram.build_and_send_telegram_message(title, imdbId, tmdbId, new_seerr_request, mediaType, releases)
 
             
     dll.delete_removed_requests(conn, c, seerr_requests)

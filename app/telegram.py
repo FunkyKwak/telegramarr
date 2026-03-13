@@ -24,9 +24,12 @@ def send_telegram_message(text: str):
         logging.error(f"Telegram API returned {resp.status_code}: {resp.text}")
 
 
-def send_telegram_message(title: str, imdbId: str, tmdbId: str, new_seerr_request: bool, releases: list, release_list: str = None):
+def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_seerr_request: bool, mediaType: str, releases: list, release_list: str = None):
     msg_html = f"<b>{title}</b>"
-    msg_html += f" (<a href='https://www.imdb.com/title/{imdbId}'>imdb</a> - <a href='https://www.themoviedb.org/movie/{tmdbId}'>tmdb</a>)"
+    msg_html += f" ("
+    if imdbId:
+        msg_html += f"<a href='https://www.imdb.com/title/{imdbId}'>imdb</a> - "
+    msg_html += f"<a href='https://www.themoviedb.org/{mediaType}/{tmdbId}'>tmdb</a>)"
     
     if new_seerr_request:
         msg_html += "\nNouvelle demande !"
@@ -38,5 +41,8 @@ def send_telegram_message(title: str, imdbId: str, tmdbId: str, new_seerr_reques
             msg_html += f"\n- <i>{release_title}</i>"
             if release_list is not None:
                 release_list += f"- {release_title}\n"
+    else:
+        if mediaType == "tv":
+            msg_html += "\n<i>La recherche de release est désactivée pour les séries, impossible de vérifier la disponibilité dans Prowlarr</i>"
 
     send_telegram_message(msg_html)

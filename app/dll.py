@@ -9,6 +9,8 @@ def init_db(conn: Connection, c: Cursor):
         tmdbId INTEGER,
         imdbId TEXT,
         tvdbId INTEGER,
+              
+        mediaType TEXT,
 
         title TEXT,
         original_title TEXT,
@@ -66,6 +68,7 @@ def update_last_search(conn: Connection, c: Cursor,
     imdbId,
     tvdbId,
 
+    mediaType,
     title,
     original_title,
     year,
@@ -82,6 +85,7 @@ def update_last_search(conn: Connection, c: Cursor,
             imdbId,
             tvdbId,
 
+            mediaType,
             title,
             original_title,
             year,
@@ -98,7 +102,7 @@ def update_last_search(conn: Connection, c: Cursor,
             release_count
         )
         VALUES (
-            ?,?,?,?,?,?,?,?,?,?,?,?,?,?
+            ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
         )
         """, (
             seerr_id,
@@ -106,6 +110,7 @@ def update_last_search(conn: Connection, c: Cursor,
             imdbId,
             tvdbId,
 
+            mediaType,
             title,
             original_title,
             year,
@@ -130,6 +135,7 @@ def update_request_found(conn: Connection, c: Cursor,
     imdbId,
     tvdbId,
 
+    mediaType,
     title,
     original_title,
     year,
@@ -149,6 +155,7 @@ def update_request_found(conn: Connection, c: Cursor,
             imdbId,
             tvdbId,
 
+            mediaType,
             title,
             original_title,
             year,
@@ -167,7 +174,7 @@ def update_request_found(conn: Connection, c: Cursor,
             releases
         )
         VALUES (
-            ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+            ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
         );
         """, (
             seerr_id,
@@ -175,6 +182,7 @@ def update_request_found(conn: Connection, c: Cursor,
             imdbId,
             tvdbId,
 
+            mediaType,
             title,
             original_title,
             year,

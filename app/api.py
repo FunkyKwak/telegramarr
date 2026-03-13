@@ -28,6 +28,7 @@ def get_requests():
         tmdbId,
         imdbId,
         tvdbId,
+        mediaType,
         title,
         year,
         status,
@@ -45,12 +46,13 @@ def get_requests():
             "tmdbId": r[0],
             "imdbId": r[1],
             "tvdbId": r[2],
-            "title": r[3],
-            "year": r[4],
-            "status": r[5],
-            "poster": r[6],
-            "release_count": r[7],
-            "releases": r[8]
+            "mediaType": r[3],
+            "title": r[4],
+            "year": r[5],
+            "status": r[6],
+            "poster": r[7],
+            "release_count": r[8],
+            "releases": r[9]
         })
 
     return jsonify({"data": result})
