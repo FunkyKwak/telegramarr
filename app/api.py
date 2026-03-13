@@ -1,11 +1,16 @@
 # app/api.py
 
+import logging
 import os
 import sqlite3
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+
+import worker
 
 
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/app/data/telegramarr.db")
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 app = Flask(__name__)
 
@@ -49,5 +54,15 @@ def get_requests():
         })
 
     return jsonify({"data": result})
+
+
+@app.route("/seerr-webhook", methods=["POST"])
+def seerr_webhook():
+    data = request.json
+    logging.info(f"Nouvelle requête Seerr : {data}")
+
+    worker.do_work()
+
+    return {"status": "ok"}
 
 #app.run(host="0.0.0.0", port=8000)

@@ -4,6 +4,7 @@ import sqlite3
 import time
 import requests
 from datetime import datetime, timedelta
+import telegram
 import ext_api
 import dll
 
@@ -11,9 +12,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 # --- CONFIGURATION ---
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/app/data/telegramarr.db")
 
 LOOP_INTERVAL_HOURS = int(os.getenv("LOOP_INTERVAL_HOURS", "1"))
@@ -27,24 +25,9 @@ dll.init_db(conn, c)
 
 SEERR_STATUS_ID_TO_NAME, SEERR_STATUS_NAME_TO_ID = dll.load_seerr_status_maps(c)
 
-# --- FONCTIONS UTILES ---
-
-def send_telegram_message(text: str):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        logging.warning("Telegram credentials not provided, skipping notification")
-        return
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    data = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": text,
-        "parse_mode": "HTML"
-    }
-    resp = requests.post(url, data=data)
-    if not resp.ok:
-        logging.error(f"Telegram API returned {resp.status_code}: {resp.text}")
 
 # --- LOGIQUE PRINCIPALE ---
-def main():
+def do_work():
     now = datetime.now()
     httpSession = requests.Session()
 
@@ -66,7 +49,9 @@ def main():
         row = dll.get_request(c, seerr_id)
         
         search_needed = True
+        new_seerr_request = True
         if row:
+            new_seerr_request = False
             title, original_title, year, overview, poster_url, backdrop_url, last_search, available_at = row
             if last_search:
                 last_search_dt = datetime.fromisoformat(last_search)
@@ -106,16 +91,8 @@ def main():
                 # message Telegram
                 logging.info(f"Film disponible ! \"{title}\" a {len(releases)} nouvelles releases")
 
-                msg_html = f"<b>{title}</b>"
-                msg_html += f" (<a href='https://www.imdb.com/title/{imdbId}'>imdb</a> - <a href='https://www.themoviedb.org/movie/{tmdbId}'>tmdb</a>)"
-                msg_html += "\nDisponible au téléchargement !"
                 release_list = ""
-                for r in releases:
-                    release_title = r.get("title")
-                    msg_html += f"\n- <i>{release_title}</i>"
-                    release_list += f"- {release_title}\n"
-
-                send_telegram_message(msg_html)
+                telegram.send_telegram_message(title, imdbId, tmdbId, new_seerr_request, releases, release_list)
                 
                 # update DB
                 dll.update_request_found(conn, c,
@@ -151,6 +128,9 @@ def main():
                     poster_url,
                     backdrop_url,
                     now)
+                if new_seerr_request:
+                    telegram.send_telegram_message(title, imdbId, tmdbId, new_seerr_request, releases)
+
             
     dll.delete_removed_requests(conn, c, seerr_requests)
 
@@ -158,8 +138,7 @@ if __name__ == "__main__":
     ext_api.wait_for_services()
 
     logging.info(f"starting loop with interval {LOOP_INTERVAL_HOURS} hours")
-    send_telegram_message("Telegramarr démarré !")
     while True:
-        main()
+        do_work()
         logging.info(f"loop finished, sleeping for {LOOP_INTERVAL_HOURS} hours...")
         time.sleep(LOOP_INTERVAL_HOURS * 3600)
