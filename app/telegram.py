@@ -49,6 +49,6 @@ def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_se
             msg_html += "\n\n<i>La recherche de release est désactivée pour les séries, impossible de vérifier la disponibilité dans Prowlarr</i>"
     
     if TELEGRAM_ADDITIONAL_MESSAGE:
-        msg_html += f"\n{TELEGRAM_ADDITIONAL_MESSAGE}"
+        msg_html += f"\n\n{TELEGRAM_ADDITIONAL_MESSAGE}"
 
     send_telegram_message(msg_html)
