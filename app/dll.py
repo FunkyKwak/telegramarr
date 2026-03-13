@@ -59,7 +59,7 @@ def load_seerr_status_maps(c: Cursor):
 
 
 def get_request(c: Cursor, seerr_id):
-    c.execute("SELECT title, original_title, year, overview, poster_url, backdrop_url, last_search, available_at FROM requests WHERE seerr_id=?", (seerr_id,))
+    c.execute("SELECT mediaType, title, original_title, year, overview, poster_url, backdrop_url, last_search, available_at FROM requests WHERE seerr_id=?", (seerr_id,))
     return c.fetchone()
 
 def update_last_search(conn: Connection, c: Cursor,

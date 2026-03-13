@@ -60,11 +60,8 @@ def get_requests():
 
 @app.route("/seerr-webhook", methods=["POST"])
 def seerr_webhook():
-    data = request.json
-    logging.info(f"Nouvelle requête Seerr : {data}")
-
+    logging.info(f"Nouvelle notification Seerr reçue : {request.json}")
     worker.do_work()
-
     return {"status": "ok"}
 
 #app.run(host="0.0.0.0", port=8000)
