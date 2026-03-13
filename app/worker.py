@@ -107,7 +107,7 @@ def do_work():
                 # message Telegram
                 logging.info(f"Film disponible ! \"{title}\" a {len(releases)} nouvelles releases")
 
-                release_list = ""
+                release_list = [""]  # Utiliser une liste pour stocker la liste des releases trouvées, afin de pouvoir la passer par référence à la fonction de message Telegram
                 telegram.build_and_send_telegram_message(title, imdbId, tmdbId, new_seerr_request, mediaType, releases, release_list)
                 
                 # update DB
@@ -129,7 +129,8 @@ def do_work():
                     now,
 
                     len(releases),
-                    release_list)
+                    release_list[0]
+                )
             else:
                 dll.update_last_search(conn, c,
                     seerr_id,

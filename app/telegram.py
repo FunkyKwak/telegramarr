@@ -24,7 +24,7 @@ def send_telegram_message(text: str):
         logging.error(f"Telegram API returned {resp.status_code}: {resp.text}")
 
 
-def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_seerr_request: bool, mediaType: str, releases: list, release_list: str = None):
+def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_seerr_request: bool, mediaType: str, releases: list, release_list = None):
     msg_html = f"<b>{title}</b>"
     msg_html += f" ("
     if imdbId:
@@ -40,7 +40,7 @@ def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_se
             release_title = r.get("title")
             msg_html += f"\n- <i>{release_title}</i>"
             if release_list is not None:
-                release_list += f"- {release_title}\n"
+                release_list[0] += f"- {release_title}\n"
     else:
         if mediaType == "movie":
             msg_html += "\n\n<i>Pas encore disponible en téléchargement</i>"
