@@ -35,14 +35,16 @@ def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_se
         msg_html += "\nNouvelle demande !"
         
     if releases:
-        msg_html += "\nDisponible au téléchargement !"
+        msg_html += "\n\nDisponible au téléchargement !"
         for r in releases:
             release_title = r.get("title")
             msg_html += f"\n- <i>{release_title}</i>"
             if release_list is not None:
                 release_list += f"- {release_title}\n"
     else:
-        if mediaType == "tv":
-            msg_html += "\n<i>La recherche de release est désactivée pour les séries, impossible de vérifier la disponibilité dans Prowlarr</i>"
+        if mediaType == "movie":
+            msg_html += "\n\n<i>Pas encore dispoonible en téléchargement</i>"
+        else:
+            msg_html += "\n\n<i>La recherche de release est désactivée pour les séries, impossible de vérifier la disponibilité dans Prowlarr</i>"
 
     send_telegram_message(msg_html)
