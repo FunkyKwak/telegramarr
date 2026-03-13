@@ -8,6 +8,7 @@ import requests
 # --- CONFIGURATION ---
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_ADDITIONAL_MESSAGE = os.getenv("TELEGRAM_ADDITIONAL_MESSAGE", None)
 
 def send_telegram_message(text: str):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -46,5 +47,8 @@ def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_se
             msg_html += "\n\n<i>Pas encore disponible en téléchargement</i>"
         else:
             msg_html += "\n\n<i>La recherche de release est désactivée pour les séries, impossible de vérifier la disponibilité dans Prowlarr</i>"
+    
+    if TELEGRAM_ADDITIONAL_MESSAGE:
+        msg_html += f"\n{TELEGRAM_ADDITIONAL_MESSAGE}"
 
     send_telegram_message(msg_html)
