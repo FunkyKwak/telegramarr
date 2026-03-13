@@ -119,7 +119,7 @@ def update_last_search(conn: Connection, c: Cursor,
             poster_url,
             backdrop_url,
 
-            "pending",
+            "unknown" if mediaType == "tv" else "pending",
 
             date.isoformat(),
             date.isoformat(),
