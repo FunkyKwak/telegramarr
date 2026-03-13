@@ -3,7 +3,7 @@
 import logging
 import os
 import sqlite3
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, redirect, request
 
 import worker
 
@@ -63,5 +63,12 @@ def seerr_webhook():
     logging.info(f"Nouvelle notification Seerr reçue : {request.json}")
     worker.do_work()
     return {"status": "ok"}
+
+
+
+@app.route("/homeassistant/plex_requests")
+def ha_plex():
+    return redirect("homeassistant://navigate/dashboard-plex-requests/plex_requests", code=302)
+
 
 #app.run(host="0.0.0.0", port=8000)
