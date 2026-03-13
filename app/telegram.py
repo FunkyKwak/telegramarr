@@ -43,7 +43,7 @@ def build_and_send_telegram_message(title: str, imdbId: str, tmdbId: str, new_se
                 release_list += f"- {release_title}\n"
     else:
         if mediaType == "movie":
-            msg_html += "\n\n<i>Pas encore dispoonible en téléchargement</i>"
+            msg_html += "\n\n<i>Pas encore disponible en téléchargement</i>"
         else:
             msg_html += "\n\n<i>La recherche de release est désactivée pour les séries, impossible de vérifier la disponibilité dans Prowlarr</i>"
 
