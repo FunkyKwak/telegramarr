@@ -62,7 +62,7 @@ def do_work():
                     search_needed = False  # déjà recherché récemment
             if available_at:
                 search_needed = False  # déjà disponible
-            if SEERR_STATUS_ID_TO_NAME[req["status"]] == "available":
+            if SEERR_STATUS_ID_TO_NAME[req["status"]] in ["available", "declined"]:
                 search_needed = False  # Requête déjà traitée, on peut la sortir de la base
                 dll.delete_request(conn, c, seerr_id)  # supprimer de la DB pour ne pas garder les films refusés
 
